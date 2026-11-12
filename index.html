@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Factory Method verstehen – interaktive Übung</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f5f1; --card:#ffffff; --ink:#1c1c1e; --muted:#5d6066; --line:#e2e0d8;
+  --creator:#4a43d6; --creator-bg:#eeeefe; --product:#0d7f62; --product-bg:#e3f4ed;
+  --hl:#e08a00; --hl-bg:#fff3d4; --bad:#c7392f; --bad-bg:#fdeceb; --good:#1d7f45; --good-bg:#e5f5ea;
+  --code-bg:#1f2130; --code-ink:#e6e6ef; --code-line:#ffffff10; --code-hl:#5a4a12;
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#16171c; --card:#202128; --ink:#ececf1; --muted:#a3a6b0; --line:#34353f;
+    --creator:#9d98ff; --creator-bg:#2a2850; --product:#4fd1a8; --product-bg:#173a30;
+    --hl:#ffb43b; --hl-bg:#3f3216; --bad:#ff7a70; --bad-bg:#3d1f1d; --good:#5fd38b; --good-bg:#183526;
+    --code-bg:#121319; --code-line:#ffffff0c; --code-hl:#5c4a14;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:16px;line-height:1.55}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.92em}
+p code, li code, td code, .txt code{background:var(--hl-bg);padding:1px 5px;border-radius:5px}
+header.top{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top-inner{max-width:1180px;margin:0 auto;padding:14px 20px 0}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand h1{font-size:20px;margin:0;letter-spacing:-.01em}
+.brand span{color:var(--muted);font-size:14px}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;margin-top:10px}
+nav.tabs a{flex:0 0 auto;text-decoration:none;color:var(--muted);padding:8px 14px;border-radius:10px 10px 0 0;font-weight:500;font-size:14.5px;border-bottom:3px solid transparent;white-space:nowrap}
+nav.tabs a .n{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--line);color:var(--ink);font-size:12px;margin-right:6px}
+nav.tabs a.active{color:var(--ink);border-bottom-color:var(--creator)}
+nav.tabs a.active .n{background:var(--creator);color:#fff}
+main{max-width:1180px;margin:0 auto;padding:26px 20px 80px}
+section.page{display:none}
+section.page.active{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h2{font-size:30px;letter-spacing:-.02em;margin:0 0 6px}
+h3{font-size:19px;margin:28px 0 10px}
+.lead{font-size:18px;color:var(--muted);max-width:760px;margin:0 0 22px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.gridEx{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+@media (max-width:900px){.grid2,.gridEx{grid-template-columns:1fr}}
+.goal{border-left:5px solid var(--creator);background:var(--creator-bg);border-radius:var(--radius);padding:18px 22px;margin:22px 0}
+.goal h3{margin-top:0}
+.note{font-size:14.5px;color:var(--muted)}
+.btn{font:inherit;font-weight:600;font-size:15px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 16px;border-radius:10px;cursor:pointer;transition:transform .08s, background .15s}
+.btn:hover{background:var(--hl-bg)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--creator);border-color:var(--creator);color:#fff}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.next-row{display:flex;justify-content:flex-end;margin-top:30px}
+
+/* code */
+.code{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:12px 0;font-family:"IBM Plex Mono",monospace;font-size:13.5px;line-height:1.6;overflow:auto;position:relative}
+.code .ln{display:flex;padding:0 14px 0 0;white-space:pre;transition:background .2s}
+.code .ln .no{width:38px;flex:0 0 38px;text-align:right;padding-right:12px;color:#ffffff40;user-select:none}
+.code .ln.cur{background:var(--code-hl);box-shadow:inset 4px 0 0 var(--hl)}
+.code .ln.add{background:#1f5d3a80;box-shadow:inset 4px 0 0 #4ade80}
+.code .ln.add .no::before{content:"+";color:#4ade80}
+.code .ln.chg{background:#7a252080;box-shadow:inset 4px 0 0 #ff6b6b}
+.code .k{color:#c79bff}.code .m{color:#f3d58c}.code .t{color:#7fd3ff}.code .s{color:#ffd480}.code .c{color:#8a8fa8;font-style:italic}.code .a{color:#ff9fd0}
+.code select{min-width:8em;font:inherit;font-size:13px;background:#33364a;color:#fff;border:1px dashed #9aa0c0;border-radius:6px;padding:1px 4px;cursor:pointer}
+.code select.ok{border:1px solid #4ade80;background:#1f4a33;color:#fff}
+.code select.no{border:1px solid #ff6b6b;background:#5a2323;color:#fff}
+
+/* naive problem */
+.problem-list{margin:0;padding-left:20px}
+.problem-list li{margin:6px 0}
+.counter{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0}
+.stat{flex:1 1 160px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat b{display:block;font-size:28px;line-height:1.1}
+.stat.bad b{color:var(--bad)}
+.stat.good b{color:var(--good)}
+.hidden{display:none !important}
+.metaphor{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;margin-top:14px}
+.metaphor .ico{font-size:34px;line-height:1}
+
+/* diagram */
+svg.uml{width:100%;height:auto;display:block}
+svg.uml .box rect.body{fill:var(--card);stroke:var(--line);stroke-width:1.5;transition:all .2s}
+svg.uml .box.creator rect.body{stroke:var(--creator)}
+svg.uml .box.product rect.body{stroke:var(--product)}
+svg.uml .box.creator rect.bar{fill:var(--creator)}
+svg.uml .box.product rect.bar{fill:var(--product)}
+svg.uml text{fill:var(--ink);font-family:"IBM Plex Sans",sans-serif}
+svg.uml .name{font-weight:700;font-size:14px}
+svg.uml .stereo{font-size:11px;fill:var(--muted)}
+svg.uml .role{font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+svg.uml .creator .role{fill:var(--creator)}
+svg.uml .product .role{fill:var(--product)}
+svg.uml .meth{font-family:"IBM Plex Mono",monospace;font-size:11px}
+svg.uml .meth.abs{font-style:italic}
+svg.uml line.div{stroke:var(--line)}
+svg.uml .edge{fill:none;stroke:var(--muted);stroke-width:1.4;transition:all .2s}
+svg.uml .edge.dash{stroke-dasharray:5 4}
+svg.uml .elabel{font-size:11px;fill:var(--muted);font-style:italic}
+svg.uml.dim .box:not(.hl){opacity:.38}
+svg.uml.dim .edge:not(.hl){opacity:.3}
+svg.uml.dim .elabel:not(.hl){opacity:.3}
+svg.uml .box.hl rect.body{fill:var(--hl-bg);stroke:var(--hl);stroke-width:3}
+svg.uml .edge.hl{stroke:var(--hl);stroke-width:2.6;opacity:1}
+svg.uml .elabel.hl{fill:var(--hl);font-weight:600}
+svg.uml.clickable .box{cursor:pointer}
+svg.uml.clickable .box:hover rect.body{stroke-width:3}
+svg.uml .box.sel rect.body{stroke:var(--hl);stroke-width:3;fill:var(--hl-bg)}
+.marker-hollow{fill:var(--card);stroke:var(--muted)}
+.marker-open{fill:none;stroke:var(--muted)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+.role-detail{min-height:220px}
+.role-detail .tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:999px;margin-bottom:8px}
+.tag.creator{background:var(--creator-bg);color:var(--creator)}
+.tag.product{background:var(--product-bg);color:var(--product)}
+table.roles{width:100%;border-collapse:collapse;font-size:15px}
+table.roles th,table.roles td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.roles th{font-size:13px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+
+/* walkthrough */
+.walk{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:960px){.walk{grid-template-columns:1fr}}
+.walk .code{max-height:620px;font-size:12.6px}
+.ctrl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+.seg button{font:inherit;font-size:14px;font-weight:600;border:0;background:transparent;color:var(--muted);padding:8px 14px;cursor:pointer}
+.seg button.on{background:var(--creator);color:#fff}
+.stepcard{border:2px solid var(--hl);background:var(--card);border-radius:var(--radius);padding:16px 18px;margin:14px 0}
+.stepcard .num{font-size:13px;font-weight:700;color:var(--hl);text-transform:uppercase;letter-spacing:.05em}
+.stepcard h4{margin:2px 0 6px;font-size:18px}
+.stepcard .txt{margin:0}
+.dots{display:flex;gap:6px;margin-top:12px}
+.dots span{width:26px;height:6px;border-radius:3px;background:var(--line);cursor:pointer}
+.dots span.done{background:var(--hl)}
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.panels{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-height:110px}
+.panel h5{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.frame{font-family:"IBM Plex Mono",monospace;font-size:12.5px;padding:5px 8px;border-radius:7px;background:var(--creator-bg);margin-bottom:4px;border:1px solid transparent}
+.frame:first-of-type{border-color:var(--hl)}
+.frame small{color:var(--muted)}
+.obj{font-family:"IBM Plex Mono",monospace;font-size:12.5px;margin-bottom:6px}
+.obj .inst{display:inline-block;padding:2px 7px;border-radius:6px;margin-top:2px}
+.obj .inst.creator{background:var(--creator-bg);color:var(--creator)}
+.obj .inst.product{background:var(--product-bg);color:var(--product)}
+.console{grid-column:1/-1;background:var(--code-bg);color:#c8f7d4;border-radius:12px;padding:10px 14px;font-family:"IBM Plex Mono",monospace;font-size:13px;min-height:72px}
+.console h5{color:#ffffff80;margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-family:"IBM Plex Sans",sans-serif}
+.console .out{white-space:pre-wrap}
+.console .out .new{animation:pop .5s ease}
+@keyframes pop{from{background:#4ade8040}to{background:transparent}}
+
+/* simple factory */
+.console .err{color:#ff8a80}
+.sim-ctrl{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin:10px 0 12px}
+.sim-ctrl label{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.sim-ctrl select,.sim-ctrl input{font:inherit;font-size:15px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink)}
+.sim-ctrl input{width:130px}
+.simmsg{min-height:72px;border-left:4px solid var(--hl);background:var(--hl-bg);padding:10px 12px;border-radius:8px;margin-bottom:10px;font-size:15px}
+.simmsg.err{border-color:var(--bad);background:var(--bad-bg)}
+table.cmp{width:100%;border-collapse:collapse;font-size:15px}
+table.cmp th,table.cmp td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+table.cmp th{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+table.cmp td:first-child{font-weight:600}
+table.cmp col.now{background:var(--hl-bg)}
+.stairs{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 22px;font-size:14px}
+.stairs span{padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--muted)}
+.stairs span.on{background:var(--creator);border-color:var(--creator);color:#fff;font-weight:600}
+.stairs i{color:var(--muted);font-style:normal}
+
+/* fake app */
+.app{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden;min-width:300px;flex:1 1 380px;max-width:560px;box-shadow:0 6px 18px #0000000d}
+.app-bar{display:flex;align-items:center;gap:10px;padding:7px 12px;background:var(--bg);border-bottom:1px solid var(--line);font-size:13px;font-weight:600;color:var(--muted)}
+.app-bar .d{display:flex;gap:5px}.app-bar .d i{width:10px;height:10px;border-radius:50%;background:var(--line);display:block}
+.app-body{display:flex;gap:16px;padding:12px 14px;align-items:center;flex-wrap:wrap}
+table.mini{border-collapse:collapse;font-size:13px}
+table.mini th,table.mini td{border:1px solid var(--line);padding:3px 10px;text-align:left}
+table.mini th{background:var(--bg)}
+.app-menu{display:flex;flex-direction:column;gap:6px}
+.appbtn{font:inherit;font-size:14px;font-weight:600;text-align:left;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 12px;border-radius:8px;cursor:pointer}
+.appbtn:hover{border-color:var(--creator)}
+.appbtn.on{border-color:var(--hl);background:var(--hl-bg);box-shadow:0 0 0 2px var(--hl)}
+.ctrl-btns{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* bonus */
+.codebox{border-radius:12px;transition:box-shadow .2s}
+.codebox.act{box-shadow:0 0 0 3px var(--hl)}
+.codebox .code{border-radius:0 0 12px 12px;max-height:470px}
+.codehead{display:flex;justify-content:space-between;gap:10px;padding:8px 14px;border-radius:12px 12px 0 0;font-size:13px;font-weight:600;color:#fff}
+.codehead.lib{background:#5b5f73}
+.codehead.own{background:var(--creator)}
+#bnLibBox .code{background:#272935}
+.whoami{font-weight:600;padding:7px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
+.ev{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin-bottom:6px}
+.ev .src{flex:0 0 auto;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;color:#fff}
+.ev .src.lib{background:#5b5f73}.ev .src.own{background:var(--creator)}
+.ev code{word-break:break-all}
+
+/* exercise */
+.task{counter-increment:task}
+.checklist{list-style:none;padding:0;margin:0}
+.checklist li{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--card);cursor:pointer}
+.checklist li input{margin-top:4px;width:18px;height:18px;accent-color:var(--creator)}
+.checklist li.ok{border-color:var(--good);background:var(--good-bg)}
+.checklist li.no{border-color:var(--bad);background:var(--bad-bg)}
+.checklist .why{display:block;font-size:14px;color:var(--muted);margin-top:3px}
+.feedback{margin-top:12px;padding:12px 14px;border-radius:10px;font-size:15px}
+.feedback.ok{background:var(--good-bg);color:var(--good);border:1px solid var(--good)}
+.feedback.no{background:var(--bad-bg);color:var(--bad);border:1px solid var(--bad)}
+.feedback ul{margin:6px 0 0;padding-left:20px;color:var(--ink)}
+
+/* quiz */
+.q{margin-bottom:18px}
+.q .qh{font-weight:600;margin-bottom:10px}
+.q .qh .qn{color:var(--creator);margin-right:6px}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;font:inherit;font-size:15px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 14px;border-radius:10px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--creator)}
+.opt.right{border-color:var(--good);background:var(--good-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt:disabled{cursor:default}
+.expl{margin-top:8px;font-size:14.5px;color:var(--muted)}
+.score{font-size:18px;font-weight:600}
+.recipe{counter-reset:r;list-style:none;padding:0;margin:0}
+.recipe li{counter-increment:r;position:relative;padding:10px 0 10px 48px;border-bottom:1px dashed var(--line)}
+.recipe li::before{content:counter(r);position:absolute;left:0;top:9px;width:32px;height:32px;border-radius:50%;background:var(--creator);color:#fff;display:grid;place-items:center;font-weight:700}
+.pro li::marker{content:"✓  ";color:var(--good)}
+.con li::marker{content:"✗  ";color:var(--bad)}
+blockquote.intent{margin:0;font-size:19px;line-height:1.5;border-left:5px solid var(--hl);padding:6px 0 6px 18px}
+
+.obj .inst.str{background:var(--line);color:var(--ink)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand"><h1>🏭 Factory Method</h1><span>Ein Erzeugungsmuster der „Gang of Four“, Schritt für Schritt · in C#</span></div>
+    <nav class="tabs" id="tabs">
+      <a href="#ziel" data-p="ziel"><span class="n">1</span>Das Problem</a>
+      <a href="#simple" data-p="simple"><span class="n">2</span>Simple Factory</a>
+      <a href="#bausteine" data-p="bausteine"><span class="n">3</span>Bausteine</a>
+      <a href="#ablauf" data-p="ablauf"><span class="n">4</span>Ablauf</a>
+      <a href="#uebung" data-p="uebung"><span class="n">5</span>Selbst erweitern</a>
+      <a href="#quiz" data-p="quiz"><span class="n">6</span>Quiz</a>
+      <a href="#fazit" data-p="fazit"><span class="n">7</span>Merkblatt</a>
+      <a href="#bonus" data-p="bonus"><span class="n">★</span>Bonus: Bibliothek</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<!-- ============ 1 PROBLEM ============ -->
+<section class="page" id="p-ziel">
+  <div class="stairs"><span class="on">① Naive Lösung</span><i>→</i><span>② Simple Factory</span><i>→</i><span>③ Factory Method</span></div>
+  <h2>Worum geht es?</h2>
+  <p class="lead">Wir programmieren die <b>Export-Funktion einer Notenverwaltung</b>. Lehrkräfte können ihre <b>Notenliste</b> und die <b>Fehlzeitenliste</b> als <b>CSV</b> (zum Öffnen in Excel) oder als <b>PDF</b> (zum Ausdrucken) exportieren. Schauen wir uns zuerst an, wie man das <i>ohne</i> Entwurfsmuster lösen würde und wo es hakt.</p>
+
+  <div class="grid2">
+    <div>
+      <div class="code" id="naiveCode"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn primary" id="addPlane">🧾 Neues Format „JSON“ einbauen</button>
+        <button class="btn hidden" id="resetPlane">↺ Zurücksetzen</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Die „naive“ Lösung</h3>
+      <p>Die Klasse <code>ExportDienst</code> kann zwei Listen exportieren: die <b>Noten</b> und die <b>Fehlzeiten</b>. In beiden Methoden entscheidet sie mit <code>if</code>-Abfragen selbst, welches Objekt sie mit <code>new</code> erzeugt.</p>
+      <p class="note" id="naiveHint">👉 Die Schul-App soll die Noten künftig auch als JSON einlesen können. Klicke auf den Button und beobachte, was im bestehenden Code passieren muss.</p>
+      <div id="naiveResult" class="hidden">
+        <div class="counter">
+          <div class="stat bad"><b id="cntChanged">0</b>Zeilen in <i>bestehendem, getestetem</i> Code eingefügt</div>
+          <div class="stat bad"><b>3</b>konkrete Klassen, von denen <code>ExportDienst</code> jetzt abhängt</div>
+        </div>
+        <p><b>Die Probleme:</b></p>
+        <ul class="problem-list">
+          <li><b>Starke Kopplung:</b> <code>ExportDienst</code> kennt jede einzelne Dokument-Klasse beim Namen.</li>
+          <li><b>Jede Erweiterung ist ein Eingriff:</b> Für jedes neue Format müssen wir alte Methoden öffnen und ändern, und zwar an <i>mehreren</i> Stellen.</li>
+          <li><b>Doppelter Code:</b> Die gleiche Erzeugungslogik steht zweimal da. Vergisst man eine Stelle, gibt es JSON nur für die Noten, aber nicht für die Fehlzeiten. Das fällt erst zur Laufzeit auf.</li>
+          <li><b>Keine gemeinsame Schnittstelle:</b> <code>SchreibeCsv()</code>, <code>ErzeugePdf()</code>, <code>ToJson()</code>: Jede Dokument-Klasse wird anders bedient.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="next-row"><a class="btn primary" href="#simple" style="text-decoration:none">Weiter: Erster Lösungsversuch – Simple Factory →</a></div>
+</section>
+
+<!-- ============ 2 SIMPLE FACTORY ============ -->
+<section class="page" id="p-simple">
+  <div class="stairs"><span>① Naive Lösung</span><i>→</i><span class="on">② Simple Factory</span><i>→</i><span>③ Factory Method</span></div>
+  <h2>Erster Schritt: Die Simple Factory</h2>
+  <p class="lead">Die einfachste Verbesserung: Wir geben allen Formaten ein <b>gemeinsames Interface</b> <code>IDokument</code> und schieben das ganze <code>new</code>-Geschäft in <b>eine eigene Klasse</b>, die Fabrik. Beide Export-Methoden bestellen dort nur noch: „Gib mir ein Dokument im Format X.“</p>
+
+  <div class="grid2">
+    <div>
+      <div class="code" id="sfCode"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn primary" id="sfAddPlane">🧾 JSON in die Fabrik einbauen</button>
+        <button class="btn hidden" id="sfReset">↺ Zurücksetzen</button>
+      </div>
+      <div id="sfStats" class="hidden">
+        <div class="counter">
+          <div class="stat good"><b>0</b>Zeilen in <code>ExportDienst</code> geändert</div>
+          <div class="stat bad"><b>1</b>Zeile in der bestehenden Klasse <code>DokumentFabrik</code> eingefügt</div>
+        </div>
+        <p class="note" style="color:var(--ink)">Viel besser als vorher (dort waren es 6 Zeilen an 2 Stellen)! Und beide Export-Methoden können sofort JSON. Aber: Wir mussten <b>trotzdem eine bestehende Klasse öffnen und ändern</b>. Mit jedem neuen Format wächst der <code>switch</code> weiter.</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">🧪 Fabrik ausprobieren</h3>
+      <p class="note" style="margin-top:0">Wähle Methode und Format und spiele den Aufruf <b>Schritt für Schritt</b> oder <b>automatisch</b> durch. Beobachte, wo im Code entschieden wird, welches Objekt entsteht. Probiere auch „json“!</p>
+      <div class="sim-ctrl">
+        <label>methode<select id="sfMeth"><option value="noten">ExportiereNoten</option><option value="fehlzeiten">ExportiereFehlzeiten</option></select></label>
+        <label>format<select id="sfArt"><option>csv</option><option>pdf</option><option>json</option></select></label>
+      </div>
+      <div class="row" style="margin-bottom:12px">
+        <button class="btn" id="sfPrev">← Zurück</button>
+        <button class="btn primary" id="sfNext">Nächster Schritt →</button>
+        <button class="btn" id="sfPlay">▶ Auto</button>
+        <span class="note" id="sfStepNo"></span>
+      </div>
+      <div class="simmsg" id="sfMsg">Noch nichts passiert. Klicke auf den Button.</div>
+      <div class="panels">
+        <div class="panel"><h5>Objekte im Speicher</h5><div id="sfObj"><span class="note">–</span></div></div>
+        <div class="panel"><h5>Wer kennt wen?</h5><div class="obj"><code>ExportDienst</code> kennt nur<br><span class="inst product">IDokument</span> + <span class="inst creator">DokumentFabrik</span></div></div>
+        <div class="console"><h5>Konsole</h5><div class="out" id="sfCon"><span style="opacity:.5">(noch keine Ausgabe)</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Bilanz der Simple Factory</h3>
+  <div class="grid2">
+    <div class="card">
+      <ul class="pro" style="margin:0">
+        <li><b>Gemeinsames Interface:</b> Alle Formate werden gleich bedient: <code>Formatiere()</code>.</li>
+        <li><b>Erzeugung an einer Stelle:</b> Alle <code>new</code>-Aufrufe stehen in der Fabrik.</li>
+        <li><b>Lose Kopplung:</b> <code>ExportDienst</code> kennt keine konkrete Dokument-Klasse mehr.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <ul class="con" style="margin:0">
+        <li><b>Nicht geschlossen für Änderung:</b> Jedes neue Format heißt, die Fabrik zu ändern.</li>
+        <li><b>Der <code>switch</code> wächst</b> und wird mit jedem Format unübersichtlicher.</li>
+        <li><b>Tippfehler</b> wie <code>"cvs"</code> fallen erst zur Laufzeit auf (Exception).</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note" style="margin-top:12px">ℹ️ Die Simple Factory ist ein verbreitetes Programmier-Idiom, aber <b>kein</b> Muster aus dem GoF-Buch.</p>
+
+  <div class="goal">
+    <h3>💡 Die Idee für den nächsten Schritt</h3>
+    <p style="margin:0">Was wäre, wenn es <b>gar keinen <code>switch</code></b> mehr gäbe? Stattdessen bekommt jedes Format seine <b>eigene Unterklasse</b> des Exporters, und jede Unterklasse weiß selbst, welches Dokument sie braucht. Ein neues Format bedeutet dann nur noch: <b>neue Klassen schreiben</b>, nichts Bestehendes ändern. Genau das ist die <b>Factory Method</b>.</p>
+  </div>
+
+  <div class="next-row"><a class="btn primary" href="#bausteine" style="text-decoration:none">Weiter: Factory Method – die Bausteine →</a></div>
+</section>
+
+<!-- ============ 3 BAUSTEINE ============ -->
+<section class="page" id="p-bausteine">
+  <div class="stairs"><span>① Naive Lösung</span><i>→</i><span>② Simple Factory</span><i>→</i><span class="on">③ Factory Method</span></div>
+  <h2>Die vier Rollen des Musters</h2>
+  <p class="lead">Die Simple Factory hatte noch einen <code>switch</code>, der bei jedem neuen Format geändert werden muss. Die Factory Method ersetzt diesen <code>switch</code> durch <b>Vererbung</b>: Jedes Format bekommt seinen eigenen Exporter. Es entstehen zwei parallele Klassen-Hierarchien: links die <span style="color:var(--creator);font-weight:600">Erzeuger</span>, rechts die <span style="color:var(--product);font-weight:600">Produkte</span>. <b>Klicke auf eine Klasse</b>, um ihre Aufgabe und ihren Code zu sehen.</p>
+  <div class="grid2">
+    <div class="card">
+      <div id="umlRoles"></div>
+      <div class="legend">
+        <span><i style="background:var(--creator)"></i>Erzeuger-Seite (Creator)</span>
+        <span><i style="background:var(--product)"></i>Produkt-Seite (Product)</span>
+        <span>── ▷ erbt / implementiert</span>
+        <span>- - → erzeugt / benutzt</span>
+        <span><em>kursiv</em> = abstrakt</span>
+      </div>
+    </div>
+    <div class="card role-detail" id="roleDetail"></div>
+  </div>
+
+  <h3>Überblick: Wer macht was?</h3>
+  <div class="card" style="padding:6px 14px">
+  <table class="roles">
+    <tr><th>Rolle (GoF)</th><th>In unserem Beispiel</th><th>Aufgabe</th></tr>
+    <tr><td><span class="tag creator">Creator</span></td><td><code>Exporter</code></td><td>Deklariert die Factory Method <code>ErstelleDokument()</code> und enthält die Export-Logik, die das Produkt benutzt. Kennt <b>nur</b> das Interface <code>IDokument</code>.</td></tr>
+    <tr><td><span class="tag creator">ConcreteCreator</span></td><td><code>CsvExporter</code>, <code>PdfExporter</code></td><td>Überschreibt die Factory Method und entscheidet, <b>welches</b> konkrete Dokument erzeugt wird.</td></tr>
+    <tr><td><span class="tag product">Product</span></td><td><code>IDokument</code></td><td>Gemeinsame Schnittstelle aller Objekte, die erzeugt werden können.</td></tr>
+    <tr><td><span class="tag product">ConcreteProduct</span></td><td><code>CsvDokument</code>, <code>PdfDokument</code></td><td>Konkrete Umsetzungen der Schnittstelle: Sie wandeln die Tabelle ins jeweilige Format um.</td></tr>
+    <tr><td><span class="tag" style="background:var(--line);color:var(--ink)">Client</span></td><td><code>ExportKnopf</code> + Menüaufbau</td><td>Benutzt nur den Typ <code>Exporter</code>. Welcher Knopf welchen konkreten Exporter bekommt, wird <b>einmal beim Programmstart</b> festgelegt.</td></tr>
+  </table>
+  </div>
+  <div class="next-row"><a class="btn primary" href="#ablauf" style="text-decoration:none">Weiter: Ablauf Schritt für Schritt →</a></div>
+</section>
+
+<!-- ============ 4 ABLAUF ============ -->
+<section class="page" id="p-ablauf">
+  <h2>Was passiert beim Ausführen?</h2>
+  <p class="lead">Hier siehst du die App, wie die Lehrkraft sie benutzt. <b>Klicke auf einen Export-Knopf</b> und verfolge Zeile für Zeile, was im Programm passiert. Achte besonders darauf, <b>wann</b> und <b>wo</b> entschieden wird, ob ein CSV- oder ein PDF-Dokument entsteht.</p>
+  <div class="ctrl">
+    <div class="app">
+      <div class="app-bar"><span class="d"><i></i><i></i><i></i></span>Notenverwaltung – Klasse 8b</div>
+      <div class="app-body">
+        <table class="mini"><tr><th>Name</th><th>Note</th></tr><tr><td>Anna</td><td>2</td></tr><tr><td>Ben</td><td>1</td></tr></table>
+        <div class="app-menu" id="appMenu">
+          <button class="appbtn" data-v="csv">📊 CSV-Export</button>
+          <button class="appbtn" data-v="pdf">📄 PDF-Export</button>
+        </div>
+      </div>
+    </div>
+    <span style="flex:1"></span>
+    <div class="ctrl-btns">
+      <button class="btn" id="prevStep">← Zurück</button>
+      <button class="btn primary" id="nextStep">Nächster Schritt →</button>
+      <button class="btn" id="playStep">▶ Auto</button>
+    </div>
+  </div>
+  <div class="walk">
+    <div class="code" id="walkCode"></div>
+    <div>
+      <div class="card" style="padding:12px"><div id="umlWalk"></div></div>
+      <div class="stepcard">
+        <div class="num" id="stepNum"></div>
+        <h4 id="stepTitle"></h4>
+        <p class="txt" id="stepTxt"></p>
+        <div class="dots" id="stepDots"></div>
+      </div>
+      <div class="panels">
+        <div class="panel"><h5>Aufruf-Stapel (Call Stack)</h5><div id="stackView"></div></div>
+        <div class="panel"><h5>Objekte im Speicher</h5><div id="objView"></div></div>
+        <div class="console"><h5>Konsole</h5><div class="out" id="conView"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="next-row"><a class="btn primary" href="#uebung" style="text-decoration:none">Weiter: Selbst erweitern →</a></div>
+</section>
+
+<!-- ============ 5 UEBUNG ============ -->
+<section class="page" id="p-uebung">
+  <h2>Jetzt du: Export als JSON 🧾</h2>
+  <p class="lead">Die Schul-App soll die Noten direkt einlesen können, dafür braucht sie <b>JSON</b>. Bei der naiven Lösung mussten wir dafür 6 Zeilen an 2 Stellen in bestehendem Code einfügen, bei der Simple Factory immerhin noch eine Zeile in der Fabrik. Jetzt bauen wir JSON mit dem Factory-Method-Muster ein.</p>
+
+  <h3>Aufgabe A – Was musst du anfassen?</h3>
+  <p>Kreuze an, was du für den JSON-Export <b>tun musst</b>. Lass alles frei, was <b>unverändert bleiben</b> kann.</p>
+  <ul class="checklist" id="checklistA"></ul>
+  <div class="row"><button class="btn primary" id="checkA">Antwort prüfen</button></div>
+  <div id="fbA"></div>
+
+  <h3>Aufgabe B – Ergänze den Code</h3>
+  <p>Wähle in den gestrichelten Feldern das Richtige aus. Wenn alles stimmt, kannst du das Programm ausführen.</p>
+  <div class="grid2 gridEx">
+    <div class="code" id="exCode"></div>
+    <div>
+      <div class="row"><button class="btn primary" id="checkB">Code prüfen</button><button class="btn" id="runB" disabled>▶ Programm ausführen</button></div>
+      <div id="fbB"></div>
+      <div class="console hidden" id="exConsole" style="margin-top:12px"><h5>Konsole</h5><div class="out" id="exOut"></div></div>
+      <div class="counter hidden" id="exStats">
+        <div class="stat good"><b>0</b>Zeilen in <code>Exporter</code> und <code>ExportKnopf</code> geändert</div>
+        <div class="stat good"><b>2</b>neue Klassen + 1 neue Zeile beim Menüaufbau</div>
+      </div>
+    </div>
+  </div>
+  <div class="next-row"><a class="btn primary" href="#quiz" style="text-decoration:none">Weiter: Quiz →</a></div>
+</section>
+
+<!-- ============ 6 QUIZ ============ -->
+<section class="page" id="p-quiz">
+  <h2>Hast du es verstanden?</h2>
+  <p class="lead">Beantworte die Fragen. Nach jeder Antwort bekommst du eine Erklärung.</p>
+  <div id="quizBox"></div>
+  <div class="card row" style="justify-content:space-between">
+    <span class="score" id="scoreView"></span>
+    <button class="btn" id="quizReset">↺ Quiz neu starten</button>
+  </div>
+  <div class="next-row"><a class="btn primary" href="#fazit" style="text-decoration:none">Weiter: Merkblatt →</a></div>
+</section>
+
+<!-- ============ 7 FAZIT ============ -->
+<section class="page" id="p-fazit">
+  <h2>Merkblatt: Factory Method</h2>
+  <div class="card" style="margin:18px 0">
+    <div class="note" style="margin-bottom:6px">Absicht des Musters (sinngemäß nach Gamma et al., „Design Patterns“, 1994)</div>
+    <blockquote class="intent">Definiere eine Schnittstelle zum Erzeugen eines Objekts, aber lass <b>Unterklassen entscheiden</b>, welche Klasse instanziiert wird.</blockquote>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3 style="margin-top:0">Rezept in 4 Schritten</h3>
+      <ol class="recipe">
+        <li>Gemeinsames <b>Produkt-Interface</b> festlegen (<code>IDokument</code>).</li>
+        <li>Im <b>Creator</b> eine (meist abstrakte) Methode deklarieren, die dieses Interface zurückgibt (<code>ErstelleDokument()</code>).</li>
+        <li>Die Logik im Creator (<code>Exportiere()</code>) ruft <b>nur diese Methode</b> auf, nie <code>new</code> mit einer konkreten Klasse.</li>
+        <li>Für jedes Produkt einen <b>ConcreteCreator</b> schreiben, der die Factory Method überschreibt (<code>CsvExporter</code>, <code>PdfExporter</code>, …).</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Vor- und Nachteile</h3>
+      <ul class="pro">
+        <li><b>Lose Kopplung:</b> Der Creator kennt keine konkreten Produkte.</li>
+        <li><b>Offen für Erweiterung, geschlossen für Änderung</b> (Open/Closed-Prinzip).</li>
+        <li><b>Eine Verantwortung:</b> Die Objekterzeugung steht an genau einer Stelle.</li>
+      </ul>
+      <ul class="con">
+        <li>Mehr Klassen: Für jedes Produkt oft ein eigener Creator.</li>
+        <li>Für sehr kleine Programme kann das Muster überdimensioniert sein.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="margin-top:20px">
+    <h3 style="margin-top:0">„Aber irgendwo muss doch <code>new</code> stehen?“</h3>
+    <p>Richtig! Das Muster schafft die Entscheidung <i>welches</i> Objekt nicht ab. Es <b>verschiebt</b> sie an den Rand des Programms, an eine einzige Stelle (bei uns: den Menüaufbau). Die Logik, <i>was</i> mit dem Objekt passiert, wird davon getrennt und muss nie wieder geändert werden.</p>
+    <p style="margin-bottom:0">Ursprünglich dachten die GoF-Autoren vor allem an <b>Frameworks und Bibliotheken</b>: Gehört <code>Exporter</code> zu einer fremden Bibliothek, <i>kann</i> man deren Code gar nicht ändern, aber man kann eine Unterklasse schreiben. Die Factory Method ist der eingebaute „Haken“, an dem man sein eigenes Produkt einhängt. <a href="#bonus">→ Das probierst du auf der Bonus-Seite aus.</a></p>
+  </div>
+  <div class="card" style="margin-top:20px">
+    <h3 style="margin-top:0">Typische Verwechslungen</h3>
+    <ul>
+      <li><b>„Simple Factory“</b> (eine Klasse mit einer <code>if</code>/<code>switch</code>-Methode, die Objekte erzeugt) ist <b>kein</b> GoF-Muster. Die Factory Method arbeitet mit <b>Vererbung und Überschreiben</b> statt mit Fallunterscheidungen.</li>
+      <li><b>Abstract Factory</b> erzeugt ganze <i>Familien</i> zusammengehöriger Objekte. Die Factory Method erzeugt <i>ein</i> Produkt.</li>
+      <li>Die Factory Method muss nicht abstrakt sein: Der Creator darf auch ein <b>Standardprodukt</b> zurückgeben (z. B. CSV), das Unterklassen bei Bedarf ändern. In C# ist sie dann <code>virtual</code> statt <code>abstract</code>.</li>
+    </ul>
+  </div>
+  <div class="next-row"><a class="btn primary" href="#bonus" style="text-decoration:none">Weiter: Bonus – Erweitern einer Bibliothek →</a></div>
+</section>
+
+<!-- ============ BONUS ============ -->
+<section class="page" id="p-bonus">
+  <h2>Bonus: Erweitern, ohne den Code ändern zu können</h2>
+  <p class="lead">Eure Schule nutzt die fertige Bibliothek <b>SchulExport</b> (z. B. über NuGet installiert). Sie kann CSV und PDF und erledigt nebenbei viel Arbeit: Kopfzeile, Speichern, Fehlerbehandlung, Protokoll. Jetzt kommt eine neue Zeugnissoftware, und die braucht <b>XML</b>. Das Problem: Die Bibliothek gibt es nur als <b>fertige DLL</b>. Ihren Code könnt ihr nicht ändern.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h3 style="margin-top:0">🔒 Warum nicht einfach die Bibliothek ändern?</h3>
+      <ul style="margin:0 0 12px;padding-left:20px">
+        <li>Ihr habt nur die <b>kompilierte DLL</b>, nicht den Quellcode.</li>
+        <li>Selbst wenn ihr ihn hättet: Beim nächsten <b>Update</b> der Bibliothek wäre eure Änderung wieder weg.</li>
+        <li>Andere Schulen nutzen dieselbe Bibliothek. Die Entwickler werden sie nicht für eine einzelne Schule umbauen.</li>
+      </ul>
+      <button class="btn" id="bnEdit">✏️ Trotzdem versuchen, die Bibliothek zu bearbeiten</button>
+      <div id="bnEditMsg"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">❌ Hätte die Bibliothek eine Simple Factory …</h3>
+      <div class="code" id="bnSimple"></div>
+      <p class="note" style="margin-bottom:0">… müsstet ihr den <code>switch</code> <b>in der DLL</b> um <code>case "xml"</code> erweitern. Das ist unmöglich, und ihr säßet fest.</p>
+    </div>
+  </div>
+
+  <h3>✅ Die Bibliothek nutzt eine Factory Method: So klappt es</h3>
+  <p>Ihr schreibt zwei Klassen <b>in eurem eigenen Projekt</b>. Spiele durch, wer wann wen aufruft. Achte auf die Sprünge zwischen <b>Bibliothek</b> und <b>eurem Code</b>.</p>
+  <div class="ctrl">
+    <span class="whoami" id="bnWho"></span>
+    <span style="flex:1"></span>
+    <div class="ctrl-btns">
+      <button class="btn" id="bnPrev">← Zurück</button>
+      <button class="btn primary" id="bnNext">Nächster Schritt →</button>
+      <button class="btn" id="bnPlay">▶ Auto</button>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="codebox" id="bnLibBox">
+      <div class="codehead lib"><span>📦 SchulExport.dll (fremd)</span><span>🔒 nicht änderbar</span></div>
+      <div class="code" id="bnLib"></div>
+    </div>
+    <div class="codebox" id="bnOwnBox">
+      <div class="codehead own"><span>✏️ Unser Projekt</span><span>frei änderbar</span></div>
+      <div class="code" id="bnOwn"></div>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="stepcard" style="margin:0">
+      <div class="num" id="bnNum"></div>
+      <h4 id="bnTitle"></h4>
+      <p class="txt" id="bnTxt"></p>
+    </div>
+    <div class="panel">
+      <h5>Was ist passiert? (Protokoll)</h5>
+      <div id="bnLog"></div>
+    </div>
+  </div>
+
+  <div class="goal" id="bnFazit">
+    <h3>💡 Das Hollywood-Prinzip</h3>
+    <p style="margin:0 0 8px">„<i>Don’t call us, we’ll call you.</i>“ Nicht euer Code ruft die Bibliothek Schritt für Schritt auf. Die <b>Bibliothek ruft euren Code auf</b>, genau an der Stelle, die sie dafür vorgesehen hat: der Factory Method.</p>
+    <p style="margin:0">Genau dafür haben die GoF-Autoren das Muster beschrieben: Ein <b>Framework</b> legt den Ablauf fest, und die Nutzer des Frameworks bestimmen über Unterklassen, <b>welche Objekte</b> darin verwendet werden, ohne eine einzige Zeile des Frameworks zu ändern.</p>
+  </div>
+</section>
+</main>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+/* ---------- Syntax-Highlighting ---------- */
+function hl(line){
+  const re = /(\/\/.*$)|("(?:[^"\\]|\\.)*")|(@\w+)|\b(class|interface|abstract|public|private|protected|override|virtual|void|return|new|static|if|else|foreach|in|int|string|var|switch|case|default|throw|this|using)\b|\b([A-Z]\w*)\b/g;
+  let out='', last=0, m;
+  while((m = re.exec(line))){
+    out += esc(line.slice(last, m.index));
+    if(m[1]) out += `<span class="c">${esc(m[1])}</span>`;
+    else if(m[2]) out += `<span class="s">${esc(m[2])}</span>`;
+    else if(m[3]) out += `<span class="a">${m[3]}</span>`;
+    else if(m[4]) out += `<span class="k">${m[4]}</span>`;
+    else {
+      const isCall = line[re.lastIndex]==='(' && !/new\s+$/.test(line.slice(0,m.index));
+      out += `<span class="${isCall?'m':'t'}">${m[5]}</span>`;
+    }
+    last = re.lastIndex;
+  }
+  return out + esc(line.slice(last));
+}
+function renderCode(el, lines){
+  el.innerHTML = lines.map((l,i)=>{
+    const o = typeof l === 'string' ? {t:l} : l;
+    return `<div class="ln ${o.cls||''}" data-i="${i}"><span class="no">${o.cls==='add'?'':i+1}</span><span>${o.html ?? hl(o.t)}</span></div>`;
+  }).join('');
+}
+function scrollToLine(box, idx){
+  const el = box.querySelector(`.ln[data-i="${idx}"]`); if(!el) return;
+  box.scrollTo({top: el.offsetTop - box.clientHeight/2 + 12, behavior:'smooth'});
+}
+
+/* ---------- Navigation ---------- */
+const PAGES = ['ziel','simple','bausteine','ablauf','uebung','quiz','fazit','bonus'];
+function show(){
+  let p = (location.hash||'').slice(1);
+  if(!PAGES.includes(p)) p = 'ziel';
+  document.querySelectorAll('section.page').forEach(s=>s.classList.toggle('active', s.id==='p-'+p));
+  document.querySelectorAll('#tabs a').forEach(a=>a.classList.toggle('active', a.dataset.p===p));
+  window.scrollTo({top:0});
+  if(p==='ablauf') renderStep();
+  if(p==='bonus') bnShow();
+}
+window.addEventListener('hashchange', show);
+
+/* ---------- 1. Naive Lösung ---------- */
+const NAIVE = [
+ 'class ExportDienst {',
+ '',
+ '    public void ExportiereNoten(string format, string[][] noten) {',
+ '        if (format == "csv") {',
+ '            CsvDokument csv = new CsvDokument();',
+ '            csv.SchreibeCsv(noten);',
+ '        } else if (format == "pdf") {',
+ '            PdfDokument pdf = new PdfDokument();',
+ '            pdf.ErzeugePdf(noten);',
+ '        }',
+ '    }',
+ '',
+ '    public void ExportiereFehlzeiten(string format, string[][] fehlzeiten) {',
+ '        if (format == "csv") {',
+ '            CsvDokument csv = new CsvDokument();',
+ '            csv.SchreibeCsv(fehlzeiten);',
+ '        } else if (format == "pdf") {',
+ '            PdfDokument pdf = new PdfDokument();',
+ '            pdf.ErzeugePdf(fehlzeiten);',
+ '        }',
+ '    }',
+ '}'
+];
+function renderNaive(withJson){
+  if(!withJson){ renderCode($('#naiveCode'), NAIVE); return; }
+  const add = v => [
+    {t:'        } else if (format == "json") {',cls:'add'},
+    {t:'            JsonDokument json = new JsonDokument();',cls:'add'},
+    {t:`            json.ToJson(${v});`,cls:'add'}];
+  const L = [];
+  NAIVE.forEach((t,i)=>{ L.push({t}); if(i===8) L.push(...add('noten')); if(i===18) L.push(...add('fehlzeiten')); });
+  renderCode($('#naiveCode'), L);
+}
+renderNaive(false);
+$('#addPlane').onclick = () => {
+  renderNaive(true);
+  $('#naiveResult').classList.remove('hidden');
+  $('#naiveHint').classList.add('hidden');
+  $('#addPlane').classList.add('hidden');
+  $('#resetPlane').classList.remove('hidden');
+  let n=0; const t=setInterval(()=>{ $('#cntChanged').textContent=++n; if(n>=6) clearInterval(t); },120);
+};
+$('#resetPlane').onclick = () => {
+  renderNaive(false);
+  $('#naiveResult').classList.add('hidden');
+  $('#naiveHint').classList.remove('hidden');
+  $('#addPlane').classList.remove('hidden');
+  $('#resetPlane').classList.add('hidden');
+};
+
+/* ---------- Gemeinsame Ausgaben ---------- */
+const OUTS = {
+  noten:{csv:['Name;Note','Anna;2','Ben;1'], pdf:['[PDF] 2 Einträge, 1 Seite'], json:['[["Name","Note"],["Anna","2"],["Ben","1"]]']},
+  fehlzeiten:{csv:['Name;Fehltage','Anna;3','Ben;0'], pdf:['[PDF] 2 Einträge, 1 Seite'], json:['[["Name","Fehltage"],["Anna","3"],["Ben","0"]]']},
+};
+const OUT = OUTS.noten;
+
+/* ---------- 2. Simple Factory ---------- */
+let sfJson = false, sfIdx = -1, sfTimer = null;
+function sfLines(){
+  const L = [
+    '// gemeinsames Produkt-Interface (neu!)',
+    'interface IDokument {',
+    '    string Formatiere(string[][] tabelle);',
+    '}',
+    '// CsvDokument und PdfDokument implementieren IDokument',
+    '',
+    '// ── Die Fabrik ──────────────────────────',
+    'class DokumentFabrik {',
+    '    public static IDokument Erstelle(string format) {',
+    '        switch (format) {',
+    '            case "csv": return new CsvDokument();',
+    '            case "pdf": return new PdfDokument();'];
+  if(sfJson) L.push({t:'            case "json": return new JsonDokument();', cls:'add'});
+  L.push(
+    '            default: throw new ArgumentException("Unbekannt: " + format);',
+    '        }',
+    '    }',
+    '}',
+    '',
+    '// ── Die Export-Logik ────────────────────',
+    'class ExportDienst {',
+    '    public void ExportiereNoten(string format, string[][] noten) {',
+    '        IDokument d = DokumentFabrik.Erstelle(format);',
+    '        Console.WriteLine("Noten-Export gestartet ...");',
+    '        string inhalt = d.Formatiere(noten);',
+    '        Console.WriteLine(inhalt);',
+    '    }',
+    '',
+    '    public void ExportiereFehlzeiten(string format, string[][] fehlzeiten) {',
+    '        IDokument d = DokumentFabrik.Erstelle(format);',
+    '        Console.WriteLine("Fehlzeiten-Export gestartet ...");',
+    '        string inhalt = d.Formatiere(fehlzeiten);',
+    '        Console.WriteLine(inhalt);',
+    '    }',
+    '}');
+  return L.map(x=>typeof x==='string'?{t:x}:x);
+}
+function sfFind(L, mark){
+  if(!mark) return -1;
+  if(Array.isArray(mark)){
+    const s = L.findIndex(o=>o.t.includes(mark[0]));
+    const k = L.slice(s).findIndex(o=>o.t.includes(mark[1]));
+    return k<0 ? -1 : s+k;
+  }
+  return L.findIndex(o=>o.t.includes(mark));
+}
+function sfRenderCode(mark){
+  const L = sfLines(), cur = sfFind(L, mark);
+  renderCode($('#sfCode'), L.map((o,i)=>({t:o.t, cls: i===cur?'cur':(o.cls||'')})));
+  if(cur>=0) scrollToLine($('#sfCode'), cur);
+}
+const SF_CLS = {csv:'CsvDokument', pdf:'PdfDokument', json:'JsonDokument'};
+function sfSteps(){
+  const meth = $('#sfMeth').value, fmt = $('#sfArt').value;
+  const known = fmt!=='json' || sfJson, cls = SF_CLS[fmt];
+  const mName = meth==='noten' ? 'ExportiereNoten' : 'ExportiereFehlzeiten';
+  const mStart = 'void '+mName, label = meth==='noten' ? 'Noten' : 'Fehlzeiten';
+  const obj = `<div class="obj">d : IDokument<br>→ <span class="inst product">${cls}-Objekt</span></div>`;
+  const start = `${label}-Export gestartet ...`;
+  const S = [
+    {mark:[mStart,'DokumentFabrik.Erstelle'], obj:null, con:[],
+     msg:`Aufruf von <code>${mName}("${fmt}", …)</code>. Die Methode bestellt bei der Fabrik ein Dokument für <b>„${fmt}“</b>. Welche Klasse dahintersteckt, weiß <code>ExportDienst</code> nicht.`},
+    {mark:'switch (format)', obj:null, con:[],
+     msg:'Wir sind jetzt in der Fabrik. Sie vergleicht den Text <code>format</code> mit allen bekannten Fällen …'},
+  ];
+  if(known){
+    S.push(
+      {mark:`case "${fmt}":`, obj:null, con:[],
+       msg:`Treffer! Die Fabrik erzeugt mit <code>new ${cls}()</code> ein <b>${cls}</b>-Objekt und gibt es als <code>IDokument</code> zurück.`},
+      {mark:[mStart,'DokumentFabrik.Erstelle'], obj, con:[],
+       msg:`Zurück in <code>${mName}()</code>: Das neue Objekt wird in <code>d</code> gespeichert. <code>d</code> hat den Typ <code>IDokument</code>, die Methode sieht also nur das Interface.`},
+      {mark:[mStart,'gestartet'], obj, con:[start],
+       msg:`Zurück in <code>${mName}()</code>: Der restliche Ablauf ist für alle Formate gleich.`},
+      {mark:[mStart,'d.Formatiere'], obj, con:[start],
+       msg:`<code>d.Formatiere()</code> ruft dank Polymorphie die Methode von <code>${cls}</code> auf. Der fertige Text wird in der Variablen <code>inhalt</code> gespeichert.`},
+      {mark:[mStart,'Console.WriteLine(inhalt)'], obj: obj + `<div class="obj">inhalt : string<br>→ <span class="inst str">${esc(OUTS[meth][fmt][0])}…</span></div>`, con:[start, ...OUTS[meth][fmt]],
+       msg:`Jetzt wird <code>inhalt</code> auf der Konsole ausgegeben. (In einer echten Anwendung würde der Text hier in eine Datei geschrieben.) ✅ Fertig! Probiere auch die andere Methode: Sie benutzt <b>dieselbe</b> Fabrik.`});
+  } else {
+    S.push({mark:'default:', obj:null, err:true, con:[{t:'Unhandled exception. System.ArgumentException: Unbekannt: json', err:true}],
+      msg:'❌ Die Fabrik kennt „json“ nicht und wirft eine Exception. Damit es klappt, muss die Fabrik <b>geändert</b> werden. Klicke links auf „JSON in die Fabrik einbauen“.'});
+  }
+  return S;
+}
+function sfShow(){
+  const S = sfSteps();
+  if(sfIdx<0){
+    sfRenderCode(null);
+    $('#sfMsg').innerHTML='Noch nichts passiert. Klicke auf „Nächster Schritt“ oder „Auto“.'; $('#sfMsg').classList.remove('err');
+    $('#sfObj').innerHTML='<span class="note">–</span>';
+    $('#sfCon').innerHTML='<span style="opacity:.5">(noch keine Ausgabe)</span>';
+    $('#sfStepNo').textContent='';
+  } else {
+    const s = S[sfIdx];
+    sfRenderCode(s.mark);
+    $('#sfMsg').innerHTML = s.msg; $('#sfMsg').classList.toggle('err', !!s.err);
+    $('#sfObj').innerHTML = s.obj || '<span class="note">–</span>';
+    $('#sfCon').innerHTML = s.con.length ? s.con.map(c=>{ const o = typeof c==='string'?{t:c}:c; return `<div class="${o.err?'err':''}">${esc(o.t)}</div>`; }).join('') : '<span style="opacity:.5">(noch keine Ausgabe)</span>';
+    $('#sfStepNo').textContent = `Schritt ${sfIdx+1} von ${S.length}`;
+  }
+  $('#sfPrev').disabled = sfIdx<=0;
+  $('#sfNext').disabled = sfIdx>=S.length-1;
+}
+function sfStop(){ clearInterval(sfTimer); sfTimer=null; $('#sfPlay').textContent='▶ Auto'; }
+function sfResetRun(){ sfStop(); sfIdx=-1; sfShow(); }
+$('#sfNext').onclick = ()=>{ sfStop(); if(sfIdx<sfSteps().length-1){ sfIdx++; sfShow(); } };
+$('#sfPrev').onclick = ()=>{ sfStop(); if(sfIdx>0){ sfIdx--; sfShow(); } };
+$('#sfPlay').onclick = ()=>{
+  if(sfTimer){ sfStop(); return; }
+  if(sfIdx>=sfSteps().length-1) sfIdx=-1;
+  $('#sfPlay').textContent='⏸ Pause';
+  const tick = ()=>{ if(sfIdx<sfSteps().length-1){ sfIdx++; sfShow(); } if(sfIdx>=sfSteps().length-1) sfStop(); };
+  tick(); if(sfTimer===null && sfIdx<sfSteps().length-1) sfTimer = setInterval(tick, 1800);
+};
+$('#sfMeth').onchange = sfResetRun;
+$('#sfArt').onchange = sfResetRun;
+$('#sfAddPlane').onclick = ()=>{
+  sfJson = true; $('#sfArt').value='json'; sfResetRun();
+  $('#sfStats').classList.remove('hidden'); $('#sfAddPlane').classList.add('hidden'); $('#sfReset').classList.remove('hidden');
+};
+$('#sfReset').onclick = ()=>{
+  sfJson = false; sfResetRun();
+  $('#sfStats').classList.add('hidden'); $('#sfAddPlane').classList.remove('hidden'); $('#sfReset').classList.add('hidden');
+};
+sfShow();
+
+/* ---------- UML-Diagramm ---------- */
+const BOXES = {
+  Exporter:      {x:20, y:20, w:280, kind:'creator', stereo:'«abstract»',  role:'Creator', m:['Exportiere(tabelle)','ErstelleDokument(): IDokument'], abs:1},
+  IDokument:  {x:380,y:20, w:280, kind:'product', stereo:'«interface»', role:'Product', m:['Formatiere(tabelle)']},
+  CsvExporter:   {x:10, y:200,w:150, kind:'creator', role:'ConcreteCreator', m:['ErstelleDokument()']},
+  PdfExporter:   {x:170,y:200,w:150, kind:'creator', role:'ConcreteCreator', m:['ErstelleDokument()']},
+  PdfDokument:{x:370,y:200,w:140, kind:'product', role:'ConcreteProduct', m:['Formatiere(tabelle)']},
+  CsvDokument:{x:530,y:200,w:140, kind:'product', role:'ConcreteProduct', m:['Formatiere(tabelle)']},
+};
+function boxSvg(name,b){
+  const top = b.stereo ? 56 : 42;
+  const h = top + 18*b.m.length + 10;
+  let s = `<g class="box ${b.kind}" data-box="${name}">`;
+  s += `<rect class="body" x="${b.x}" y="${b.y}" width="${b.w}" height="${h}" rx="8"/>`;
+  s += `<rect class="bar" x="${b.x}" y="${b.y}" width="${b.w}" height="4" rx="2"/>`;
+  const cx = b.x + b.w/2;
+  let y = b.y;
+  if(b.stereo){ s += `<text class="stereo" x="${cx}" y="${y+18}" text-anchor="middle">${b.stereo}</text>`; y += 16; }
+  s += `<text class="name" x="${cx}" y="${y+20}" text-anchor="middle"${b.stereo==='«abstract»'?' font-style="italic"':''}>${name}</text>`;
+  s += `<text class="role" x="${cx}" y="${y+34}" text-anchor="middle">${b.role}</text>`;
+  s += `<line class="div" x1="${b.x}" x2="${b.x+b.w}" y1="${b.y+top}" y2="${b.y+top}"/>`;
+  b.m.forEach((m,i)=>{ s += `<text class="meth${b.abs===i?' abs':''}" x="${b.x+8}" y="${b.y+top+18+18*i}">${esc(m)}</text>`; });
+  return s + '</g>';
+}
+function umlSvg(uid, clickable){
+  const mk = id => `${uid}-${id}`;
+  return `<svg class="uml${clickable?' clickable':''}" viewBox="0 0 680 334" role="img" aria-label="Klassendiagramm des Factory-Method-Musters">
+  <defs>
+    <marker id="${mk('tri')}" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path class="marker-hollow" d="M1,1 L11,6 L1,11 z"/></marker>
+    <marker id="${mk('arr')}" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto-start-reverse"><path class="marker-open" d="M1,1 L10,6 L1,11" stroke-width="1.5"/></marker>
+  </defs>
+  <path class="edge" data-e="inh-CsvExporter" d="M85,200 L130,122" marker-end="url(#${mk('tri')})"/>
+  <path class="edge" data-e="inh-PdfExporter" d="M245,200 L190,122" marker-end="url(#${mk('tri')})"/>
+  <path class="edge dash" data-e="inh-PdfDokument" d="M440,200 L490,104" marker-end="url(#${mk('tri')})"/>
+  <path class="edge dash" data-e="inh-CsvDokument" d="M600,200 L550,104" marker-end="url(#${mk('tri')})"/>
+  <path class="edge dash" data-e="uses" d="M300,62 L378,62" marker-end="url(#${mk('arr')})"/>
+  <text class="elabel" data-e="uses" x="339" y="54" text-anchor="middle">benutzt</text>
+  <path class="edge dash" data-e="cr-PdfExporter" d="M245,270 V294 H440 V272" marker-end="url(#${mk('arr')})"/>
+  <text class="elabel" data-e="cr-PdfExporter" x="342" y="289" text-anchor="middle">«erzeugt»</text>
+  <path class="edge dash" data-e="cr-CsvExporter" d="M85,270 V318 H600 V272" marker-end="url(#${mk('arr')})"/>
+  <text class="elabel" data-e="cr-CsvExporter" x="342" y="313" text-anchor="middle">«erzeugt»</text>
+  ${Object.entries(BOXES).map(([n,b])=>boxSvg(n,b)).join('')}
+</svg>`;
+}
+function highlightUml(root, ids){
+  const svg = root.querySelector('svg');
+  svg.classList.toggle('dim', ids.length>0);
+  svg.querySelectorAll('.box').forEach(g=>g.classList.toggle('hl', ids.includes(g.dataset.box)));
+  svg.querySelectorAll('[data-e]').forEach(e=>e.classList.toggle('hl', ids.includes(e.dataset.e)));
+}
+
+/* ---------- Code der Factory-Method-Lösung ---------- */
+const CODE_FORMATIERER = ['interface IDokument {','    string Formatiere(string[][] tabelle);','}'];
+const CODE_CSV = [
+  'class CsvDokument : IDokument {',
+  '    public string Formatiere(string[][] tabelle) {',
+  '        string text = "";',
+  '        foreach (string[] zeile in tabelle) {',
+  '            text += string.Join(";", zeile) + "\\n";',
+  '        }',
+  '        return text;',
+  '    }',
+  '}'];
+const CODE_PDF = [
+  'class PdfDokument : IDokument {',
+  '    public string Formatiere(string[][] tabelle) {',
+  '        // vereinfacht: echte PDFs erzeugt man mit einer Bibliothek',
+  '        return "[PDF] " + (tabelle.Length - 1) + " Einträge, 1 Seite";',
+  '    }',
+  '}'];
+const CODE_EXPORTER = [
+  'abstract class Exporter {',
+  '    // die Factory Method',
+  '    protected abstract IDokument ErstelleDokument();',
+  '',
+  '    public void Exportiere(string[][] tabelle) {',
+  '        IDokument d = ErstelleDokument();',
+  '        Console.WriteLine("Export gestartet ...");',
+  '        string inhalt = d.Formatiere(tabelle);',
+  '        Console.WriteLine(inhalt);',
+  '    }',
+  '}'];
+const CODE_CSVEXP = ['class CsvExporter : Exporter {','    protected override IDokument ErstelleDokument() {','        return new CsvDokument();','    }','}'];
+const CODE_PDFEXP = ['class PdfExporter : Exporter {','    protected override IDokument ErstelleDokument() {','        return new PdfDokument();','    }','}'];
+
+/* ---------- 3. Bausteine ---------- */
+const ROLE_INFO = {
+  Exporter:{tag:'Creator',kind:'creator',title:'Exporter – der Erzeuger',
+    txt:'Die abstrakte Oberklasse. Sie <b>deklariert</b> die Factory Method <code>ErstelleDokument()</code>, implementiert sie aber nicht. Ihre eigentliche Aufgabe ist die Export-Logik <code>Exportiere()</code>: Diese ruft die Factory Method auf und arbeitet dann mit dem Ergebnis. Wichtig: In dieser Klasse kommt weder <code>CsvDokument</code> noch <code>PdfDokument</code> vor!',
+    code:CODE_EXPORTER},
+  CsvExporter:{tag:'ConcreteCreator',kind:'creator',title:'CsvExporter – ein konkreter Erzeuger',
+    txt:'Erbt die komplette Export-Logik von <code>Exporter</code> und überschreibt nur die Factory Method. <b>Hier</b> fällt die Entscheidung, dass ein <code>CsvDokument</code> erzeugt wird. Der Rückgabetyp bleibt trotzdem <code>IDokument</code>.',
+    code:CODE_CSVEXP},
+  PdfExporter:{tag:'ConcreteCreator',kind:'creator',title:'PdfExporter – ein konkreter Erzeuger',
+    txt:'Genau wie <code>CsvExporter</code>, nur dass hier ein <code>PdfDokument</code> erzeugt wird. Mehr muss diese Klasse nicht können, denn die Export-Logik erbt sie.',
+    code:CODE_PDFEXP},
+  IDokument:{tag:'Product',kind:'product',title:'IDokument – das Produkt-Interface',
+    txt:'Die gemeinsame Schnittstelle aller Formate: Jedes Dokument kann eine Tabelle in sein Format umwandeln. Weil <code>Exporter</code> nur dieses Interface kennt, funktioniert er mit jedem Format und für jede Liste (Noten, Fehlzeiten, …), auch mit solchen, die es heute noch gar nicht gibt.',
+    code:CODE_FORMATIERER},
+  CsvDokument:{tag:'ConcreteProduct',kind:'product',title:'CsvDokument – ein konkretes Produkt',
+    txt:'Wandelt die Tabelle in CSV um: eine Zeile pro Datensatz, Werte durch <code>;</code> getrennt. Wird ausschließlich von <code>CsvExporter</code> erzeugt.',
+    code:CODE_CSV},
+  PdfDokument:{tag:'ConcreteProduct',kind:'product',title:'PdfDokument – ein konkretes Produkt',
+    txt:'Setzt die Tabelle als PDF. (Im echten Leben übernimmt das eine Bibliothek, hier ist es vereinfacht.) Wird ausschließlich von <code>PdfExporter</code> erzeugt.',
+    code:CODE_PDF},
+};
+$('#umlRoles').innerHTML = umlSvg('r', true);
+function selectRole(n){
+  const info = ROLE_INFO[n];
+  $('#umlRoles').querySelectorAll('.box').forEach(g=>g.classList.toggle('sel', g.dataset.box===n));
+  $('#roleDetail').innerHTML = `<span class="tag ${info.kind}">${info.tag}</span><h3 style="margin:2px 0 8px">${info.title}</h3><p>${info.txt}</p><div class="code" id="roleCode"></div>`;
+  renderCode($('#roleCode'), info.code);
+}
+$('#umlRoles').addEventListener('click', e=>{ const g=e.target.closest('.box'); if(g) selectRole(g.dataset.box); });
+selectRole('Exporter');
+
+/* ---------- 4. Ablauf ---------- */
+let variant = 'csv', step = 0, playTimer = null;
+const V = {
+  csv:{cc:'CsvExporter', p:'CsvDokument', out:OUT.csv, mark:'string.Join(";"', other:'PDF', otherP:'PdfDokument', label:'CSV', preview:'"Name;Note\\nAnna;2\\n…"'},
+  pdf:{cc:'PdfExporter', p:'PdfDokument', out:OUT.pdf, mark:'return "[PDF]', other:'CSV', otherP:'CsvDokument', label:'PDF', preview:'"[PDF] 2 Einträge, 1 Seite"'},
+};
+const CODE_KNOPF = [
+  'class ExportKnopf {',
+  '    private string text;',
+  '    private Exporter exporter;',
+  '',
+  '    public ExportKnopf(string text, Exporter exporter) {',
+  '        this.text = text;',
+  '        this.exporter = exporter;',
+  '    }',
+  '',
+  '    public void WurdeGeklickt(string[][] tabelle) {',
+  '        // der Knopf weiß nicht, welches Format!',
+  '        exporter.Exportiere(tabelle);',
+  '    }',
+  '}'];
+const CODE_MAIN = [
+  'class NotenApp {',
+  '    static void Main() {',
+  '        var menue = new List<ExportKnopf>();',
+  '        // Menü aufbauen. Hier – und nur hier – wird',
+  '        // entschieden, welcher Knopf welchen Exporter bekommt.',
+  '        menue.Add(new ExportKnopf("CSV-Export", new CsvExporter()));',
+  '        menue.Add(new ExportKnopf("PDF-Export", new PdfExporter()));',
+  '        // ... Fenster anzeigen und auf Klicks warten',
+  '    }',
+  '}'];
+function walkCode(){
+  return [
+  '// ── Produkte ─────────────────────────────',
+  ...CODE_FORMATIERER, '',
+  ...CODE_CSV, '',
+  ...CODE_PDF, '',
+  '// ── Erzeuger (Creator) ───────────────────',
+  ...CODE_EXPORTER, '',
+  ...CODE_CSVEXP, '',
+  ...CODE_PDFEXP, '',
+  '// ── Client: das Export-Menü der App ──────',
+  ...CODE_KNOPF, '',
+  ...CODE_MAIN];
+}
+function buildSteps(){
+  const S = V[variant];
+  const kCsv = ['Knopf „CSV“.exporter','Exporter','CsvExporter-Objekt','creator'];
+  const kPdf = ['Knopf „PDF“.exporter','Exporter','PdfExporter-Objekt','creator'];
+  const knopf = [kCsv,kPdf];
+  const fObj = ['d','IDokument',S.p+'-Objekt','product'];
+  const sObj = ['inhalt','string',S.preview,'str'];
+  const ev = '<small>Mausklick der Lehrkraft</small>';
+  const fK = 'WurdeGeklickt(noten)  <small>in ExportKnopf</small>';
+  const fEx = 'Exportiere(noten)  <small>in Exporter</small>';
+  return [
+    {title:'Programmstart: Das Menü wird aufgebaut', line:`menue.Add(new ExportKnopf("${S.label}-Export`, hl:['CsvExporter','PdfExporter'], click:false,
+     stack:['Main()  <small>in NotenApp</small>'], objs:knopf, con:[],
+     txt:`Beim Start erzeugt die App zwei Knöpfe. Jeder bekommt <b>seinen</b> Exporter mit: der CSV-Knopf einen <code>CsvExporter</code>, der PDF-Knopf einen <code>PdfExporter</code>. Das ist die <b>einzige Stelle</b> im Programm, an der ein konkreter Exporter mit <code>new</code> erzeugt wird. 👉 Klicke jetzt oben in der App auf einen Knopf (oder auf „Nächster Schritt“).`},
+    {title:`Die Lehrkraft klickt auf „${S.label}-Export“`, line:'void WurdeGeklickt', hl:[S.cc], click:true,
+     stack:[fK, ev], objs:knopf, con:[],
+     txt:`Der Knopf reagiert auf den Klick. Er hat sich beim Programmstart seinen Exporter gemerkt (Attribut <code>exporter</code>). Dessen Typ ist aber nur <code>Exporter</code>: Der Knopf selbst weiß <b>nicht</b>, ob dahinter CSV oder PDF steckt.`},
+    {title:'Aufruf der Export-Logik', line:'exporter.Exportiere(tabelle);', hl:['Exporter'], click:true,
+     stack:[fEx, fK, ev], objs:knopf, con:[],
+     txt:`Der Knopf ruft <code>Exportiere()</code> auf. Diese Methode steht <b>nur einmal</b> in <code>Exporter</code> und wird an alle Unterklassen vererbt.`},
+    {title:'Der Creator braucht ein Produkt', line:'IDokument d = ErstelleDokument();', hl:['Exporter','uses','IDokument'], click:true,
+     stack:[fEx, fK, ev], objs:knopf, con:[],
+     txt:`<code>Exportiere()</code> braucht ein Dokument. Statt selbst <code>new&nbsp;…</code> zu schreiben, ruft sie die <b>Factory Method</b> <code>ErstelleDokument()</code> auf. <code>Exporter</code> weiß nicht, was dabei herauskommt. Sie weiß nur: Es ist irgendein <code>IDokument</code>.`},
+    {title:'Polymorphie entscheidet: die Unterklasse ist dran', line:`return new ${S.p}();`, hl:[S.cc,'cr-'+S.cc,S.p], click:true,
+     stack:['ErstelleDokument()  <small>in '+S.cc+'</small>', fEx, fK, ev], objs:knopf, con:[],
+     txt:`Das Objekt, auf dem wir arbeiten, ist in Wirklichkeit der <code>${S.cc}</code> aus dem ${S.label}-Knopf. Weil <code>${S.cc}</code> die Methode mit <code>override</code> überschrieben hat, springt das Programm in <b>diese</b> Methode (dynamische Bindung). Nur <b>hier</b> steht <code>new ${S.p}()</code>, und hier entsteht das Produkt.`},
+    {title:'Das Produkt wird als IDokument zurückgegeben', line:'IDokument d = ErstelleDokument();', hl:['Exporter','IDokument',S.p], click:true,
+     stack:[fEx, fK, ev], objs:[...knopf,fObj], con:[],
+     txt:`Das neue <code>${S.p}</code>-Objekt wird zurückgegeben und in <code>d</code> gespeichert. Die Variable <code>d</code> hat den Typ <code>IDokument</code>: Der Code in <code>Exporter</code> sieht nur das Interface, nicht das konkrete Format.`},
+    {title:'Die Export-Logik läuft weiter', line:'Console.WriteLine("Export gestartet', hl:['Exporter'], click:true,
+     stack:[fEx, fK, ev], objs:[...knopf,fObj], con:['Export gestartet ...'],
+     txt:`Der Rest von <code>Exportiere()</code> ist für <b>jedes</b> Format gleich. Dieser Code wird nie verändert, egal wie viele Formate noch dazukommen.`},
+    {title:'Der Creator benutzt das Produkt', line:'string inhalt = d.Formatiere(tabelle);', hl:['Exporter','uses','IDokument'], click:true,
+     stack:[fEx, fK, ev], objs:[...knopf,fObj], con:['Export gestartet ...'],
+     txt:`Jetzt soll das Dokument die Tabelle formatieren: <code>d.Formatiere(tabelle)</code>. <code>Exporter</code> kennt dabei wieder nur das Interface <code>IDokument</code>. Welche <code>Formatiere()</code>-Methode wird also ausgeführt?`},
+    {title:'Polymorphie: Das Produkt erledigt seine Arbeit', line:S.mark, hl:[S.p], click:true,
+     stack:['Formatiere(tabelle)  <small>in '+S.p+'</small>', fEx, fK, ev], objs:[...knopf,fObj], con:['Export gestartet ...'],
+     txt:`Wieder entscheidet die Polymorphie: Weil <code>d</code> auf ein <code>${S.p}</code>-Objekt zeigt, springt das Programm in <code>${S.p}.Formatiere()</code>. Hier wird die Tabelle ins ${S.label}-Format umgewandelt.`},
+    {title:'Der Text wird zurückgegeben', line:'string inhalt = d.Formatiere(tabelle);', hl:['Exporter'], click:true,
+     stack:[fEx, fK, ev], objs:[...knopf,fObj,sObj], con:['Export gestartet ...'],
+     txt:`Zurück in <code>Exporter</code>: Der fertige Text wird in der Variablen <code>inhalt</code> gespeichert.`},
+    {title:'Das Ergebnis wird ausgegeben', line:'Console.WriteLine(inhalt);', hl:['Exporter'], click:true,
+     stack:[fEx, fK, ev], objs:[...knopf,fObj,sObj], con:['Export gestartet ...', ...S.out],
+     txt:`<code>inhalt</code> wird auf der Konsole ausgegeben. (In einer echten Anwendung würde der Text hier in eine Datei geschrieben.)`},
+    {title:'Fertig! Was ist eigentlich passiert?', line:null, hl:['Exporter','IDokument'], click:true,
+     stack:[], objs:[...knopf,fObj,sObj], con:['Export gestartet ...', ...S.out],
+     txt:`Weder <code>ExportKnopf</code> noch <code>Exporter</code> enthalten den Namen „${S.p}“. Die Entscheidung fiel <b>einmal beim Menüaufbau</b> (welcher Knopf welchen Exporter bekommt) und dann <b>in der Unterklasse</b> <code>${S.cc}</code> (welches Dokument entsteht). 👉 Klicke oben auf <b>„${S.other}-Export“</b>: Derselbe Code läuft, aber diesmal entsteht ein <code>${S.otherP}</code>.`},
+  ];
+}
+$('#umlWalk').innerHTML = umlSvg('w', false);
+let lastCon = 0;
+function renderStep(){
+  const steps = buildSteps();
+  const lines = walkCode();
+  const s = steps[step];
+  const cur = s.line ? lines.findIndex(l=>l.includes(s.line)) : -1;
+  renderCode($('#walkCode'), lines.map((t,i)=>({t, cls: i===cur?'cur':''})));
+  if(cur>=0) scrollToLine($('#walkCode'), cur);
+  highlightUml($('#umlWalk'), s.hl);
+  $('#stepNum').textContent = `Schritt ${step+1} von ${steps.length}`;
+  $('#stepTitle').textContent = s.title;
+  $('#stepTxt').innerHTML = s.txt;
+  $('#stepDots').innerHTML = steps.map((_,i)=>`<span class="${i<=step?'done':''}" data-s="${i}" title="Schritt ${i+1}"></span>`).join('');
+  $('#stackView').innerHTML = s.stack.length ? s.stack.map(f=>`<div class="frame">${f}</div>`).join('') : '<span class="note">leer, Programm beendet</span>';
+  $('#objView').innerHTML = s.objs.map(([v,t,o,k])=>`<div class="obj">${v} : ${t}<br>→ <span class="inst ${k}">${esc(o)}</span></div>`).join('');
+  $('#conView').innerHTML = s.con.length ? s.con.map((c,i)=>`<div class="${i>=lastCon?'new':''}">${esc(c)}</div>`).join('') : '<span style="opacity:.5">(noch keine Ausgabe)</span>';
+  lastCon = s.con.length;
+  $('#prevStep').disabled = step===0;
+  $('#nextStep').disabled = step===steps.length-1;
+  $('#appMenu').querySelectorAll('.appbtn').forEach(x=>x.classList.toggle('on', s.click && x.dataset.v===variant));
+}
+function stopPlay(){ clearInterval(playTimer); playTimer=null; $('#playStep').textContent='▶ Auto'; }
+$('#nextStep').onclick = ()=>{ stopPlay(); if(step<buildSteps().length-1){step++; renderStep();} };
+$('#prevStep').onclick = ()=>{ stopPlay(); if(step>0){step--; lastCon=0; renderStep();} };
+$('#stepDots').addEventListener('click', e=>{ const d=e.target.dataset.s; if(d!==undefined){ stopPlay(); step=+d; lastCon=0; renderStep(); }});
+$('#playStep').onclick = ()=>{
+  if(playTimer){ stopPlay(); return; }
+  if(step===buildSteps().length-1){ step=0; lastCon=0; renderStep(); }
+  $('#playStep').textContent='⏸ Pause';
+  playTimer = setInterval(()=>{ if(step<buildSteps().length-1){ step++; renderStep(); } else stopPlay(); }, 3800);
+};
+$('#appMenu').addEventListener('click', e=>{
+  const b = e.target.closest('.appbtn'); if(!b) return;
+  stopPlay(); variant = b.dataset.v; step = 1; lastCon = 0;
+  renderStep();
+});
+
+/* ---------- 5. Übung ---------- */
+const CHECK = [
+  {t:'Neue Klasse <code>JsonDokument</code> schreiben', need:true, why:'Ja: ein neues konkretes Produkt, das <code>IDokument</code> implementiert.'},
+  {t:'Neue Klasse <code>JsonExporter</code> schreiben', need:true, why:'Ja: ein neuer konkreter Erzeuger, der <code>ErstelleDokument()</code> überschreibt und ein <code>JsonDokument</code> liefert.'},
+  {t:'Die Klasse <code>Exporter</code> ändern', need:false, why:'Nein! Genau das ist der Sinn des Musters: Die Export-Logik bleibt unangetastet.'},
+  {t:'Das Interface <code>IDokument</code> ändern', need:false, why:'Nein: Das JSON-Dokument erfüllt einfach die vorhandene Schnittstelle.'},
+  {t:'Die Klasse <code>CsvExporter</code> ändern', need:false, why:'Nein: Bestehende Exporter haben mit JSON nichts zu tun.'},
+  {t:'Die Klasse <code>ExportKnopf</code> ändern', need:false, why:'Nein: Der Knopf arbeitet mit jedem <code>Exporter</code>, ohne zu wissen, welcher es ist.'},
+  {t:'Beim Menüaufbau einen neuen Knopf mit <code>new JsonExporter()</code> hinzufügen', need:true, why:'Ja: Das ist die einzige Stelle, an der entschieden wird, welcher Knopf welchen Exporter bekommt. Eine neue Zeile genügt.'},
+];
+$('#checklistA').innerHTML = CHECK.map((c,i)=>`<li data-i="${i}"><input type="checkbox" id="cb${i}"><label for="cb${i}">${c.t}<span class="why hidden">${c.why}</span></label></li>`).join('');
+$('#checklistA').addEventListener('click', e=>{ if(e.target.tagName==='LI'){ const cb=e.target.querySelector('input'); cb.checked=!cb.checked; }});
+$('#checkA').onclick = ()=>{
+  let right=0;
+  CHECK.forEach((c,i)=>{
+    const li = $(`#checklistA li[data-i="${i}"]`), ok = $('#cb'+i).checked===c.need;
+    li.classList.toggle('ok',ok); li.classList.toggle('no',!ok);
+    li.querySelector('.why').classList.remove('hidden');
+    if(ok) right++;
+  });
+  $('#fbA').innerHTML = right===CHECK.length
+    ? `<div class="feedback ok">🎉 Alles richtig! Zwei neue Klassen, eine Zeile im Client, und <b>kein</b> bestehender Baustein des Musters wird verändert.</div>`
+    : `<div class="feedback no">${right} von ${CHECK.length} richtig. Lies die Erklärungen bei den rot markierten Punkten und versuch es noch einmal.</div>`;
+};
+
+const SEL = {
+  s1:{opts:['Exporter','IDokument','CsvDokument'], ok:'IDokument', hint:'<code>JsonDokument</code> ist ein Produkt. Es muss die Produkt-Schnittstelle <code>IDokument</code> erfüllen.'},
+  s2:{opts:['IDokument','JsonDokument','Exporter'], ok:'Exporter', hint:'<code>JsonExporter</code> ist ein Erzeuger und erbt deshalb vom Creator <code>Exporter</code>.'},
+  s3:{opts:['new','virtual','override'], ok:'override', hint:'Nur mit <code>override</code> wird die abstrakte Methode der Oberklasse überschrieben. Mit <code>new</code> würde sie nur <i>verdeckt</i>, und <code>virtual</code> überschreibt selbst nichts. In beiden Fällen meldet der Compiler, dass die abstrakte Methode nicht umgesetzt ist.'},
+  s4:{opts:['void','Exporter','IDokument'], ok:'IDokument', hint:'Die Factory Method gibt den <i>allgemeinen</i> Produkttyp zurück, so wie in der Oberklasse festgelegt.'},
+  s5:{opts:['IDokument','JsonExporter','JsonDokument','CsvDokument'], ok:'JsonDokument', hint:'Hier wird das <i>konkrete</i> Produkt erzeugt. Von einem Interface wie <code>IDokument</code> kann man kein Objekt erzeugen.'},
+  s6:{opts:['Exporter','JsonDokument','JsonExporter'], ok:'JsonExporter', hint:'Der Knopf braucht einen <code>Exporter</code>. <code>Exporter</code> selbst ist abstrakt und nicht instanziierbar; ein <code>JsonDokument</code> ist kein <code>Exporter</code>.'},
+};
+const EX = [
+  '// neues konkretes Produkt',
+  'class JsonDokument : {{s1}} {',
+  '    public string Formatiere(string[][] tabelle) {',
+  '        return JsonSerializer.Serialize(tabelle);  // System.Text.Json',
+  '    }',
+  '}',
+  '',
+  '// neuer konkreter Erzeuger',
+  'class JsonExporter : {{s2}} {',
+  '    protected {{s3}} {{s4}} ErstelleDokument() {',
+  '        return new {{s5}}();',
+  '    }',
+  '}',
+  '',
+  '// beim Menüaufbau in NotenApp.Main(): eine neue Zeile',
+  'menue.Add(new ExportKnopf("JSON-Export", new {{s6}}()));',
+];
+function exLine(t){
+  return t.split(/(\{\{s\d\}\})/).map(part=>{
+    const m = part.match(/^\{\{(s\d)\}\}$/);
+    if(!m) return hl(part);
+    const d = SEL[m[1]];
+    return `<select id="${m[1]}" aria-label="Lücke ${m[1].slice(1)}"><option value="">  ?  </option>${d.opts.map(o=>`<option>${o}</option>`).join('')}</select>`;
+  }).join('');
+}
+renderCode($('#exCode'), EX.map(t=>({t, html:exLine(t)})));
+$('#exCode').addEventListener('change', e=>{ e.target.classList.remove('ok','no'); $('#runB').disabled=true; });
+$('#checkB').onclick = ()=>{
+  const wrong=[];
+  Object.entries(SEL).forEach(([id,d])=>{
+    const el=$('#'+id), ok=el.value===d.ok;
+    el.classList.toggle('ok',ok); el.classList.toggle('no',!ok);
+    if(!ok) wrong.push(`<li><b>Lücke ${id.slice(1)}:</b> ${el.value?d.hint:'noch nichts ausgewählt.'}</li>`);
+  });
+  if(wrong.length===0){
+    $('#fbB').innerHTML = `<div class="feedback ok">✅ Perfekt! Der Code ist korrekt. Führe ihn jetzt aus.</div>`;
+    $('#runB').disabled=false;
+  } else {
+    $('#fbB').innerHTML = `<div class="feedback no">Noch ${wrong.length} Fehler:<ul>${wrong.join('')}</ul></div>`;
+    $('#runB').disabled=true;
+  }
+};
+$('#runB').onclick = ()=>{
+  $('#exConsole').classList.remove('hidden');
+  $('#exOut').innerHTML='';
+  const out=['(Klick auf „JSON-Export“)','Export gestartet ...', ...OUT.json];
+  out.forEach((l,i)=>setTimeout(()=>{ $('#exOut').innerHTML += `<div class="new">${esc(l)}</div>`; if(i===out.length-1) $('#exStats').classList.remove('hidden'); }, 500*(i+1)));
+};
+
+/* ---------- 6. Quiz ---------- */
+const QUIZ = [
+  {q:'Was verbessert die Simple Factory gegenüber der naiven Lösung mit if-Ketten?',
+   o:['Für neue Formate muss gar kein bestehender Code mehr geändert werden','Die Objekterzeugung steht an einer Stelle, und ExportDienst kennt nur noch das Interface IDokument','Sie ersetzt die Fallunterscheidung durch Vererbung','Sie macht das Interface IDokument überflüssig'], a:1,
+   e:'Die Fabrik bündelt alle <code>new</code>-Aufrufe. Bei neuen Formaten muss aber die Fabrik selbst noch geändert werden. Erst die Factory Method löst das mit Vererbung.'},
+  {q:'Welche Methode ist in unserem Beispiel die eigentliche „Factory Method“?',
+   o:['Exportiere()','ErstelleDokument()','Formatiere()','Main()'], a:1,
+   e:'<code>ErstelleDokument()</code> erzeugt das Produkt und wird von den Unterklassen überschrieben. <code>Exportiere()</code> ist die Export-Logik, die sie <i>benutzt</i>.'},
+  {q:'Wer entscheidet, ob ein CsvDokument oder ein PdfDokument erzeugt wird?',
+   o:['Die Klasse Exporter mit einer if-Abfrage','Das Interface IDokument','Die jeweilige Unterklasse von Exporter','Der Compiler'], a:2,
+   e:'Genau das ist der Kern: Der Creator überlässt die Entscheidung seinen Unterklassen (ConcreteCreators).'},
+  {q:'Irgendwo muss doch new CsvExporter() stehen. Wo passiert das in unserer App?',
+   o:['In der Klasse Exporter, mit einer if-Abfrage','Einmal beim Aufbau des Menüs: Jeder ExportKnopf bekommt dort seinen Exporter','In jeder Methode, die etwas exportiert','Nirgends, C# erzeugt die Objekte automatisch'], a:1,
+   e:'Die Entscheidung verschwindet nicht, sie wird an den <b>Rand</b> des Programms verschoben: an genau eine Stelle beim Programmstart. Alle anderen Klassen arbeiten nur mit dem allgemeinen Typ <code>Exporter</code>.'},
+  {q:'Warum gibt ErstelleDokument() den Typ IDokument zurück und nicht CsvDokument?',
+   o:['Weil C# es so vorschreibt','Damit Exporter unabhängig von den konkreten Dokument-Klassen bleibt','Weil CsvDokument abstrakt ist','Damit das Programm schneller läuft'], a:1,
+   e:'Durch den allgemeinen Rückgabetyp muss <code>Exporter</code> keine konkrete Klasse kennen. So kann jedes neue Format ohne Änderung eingesetzt werden.'},
+  {q:'Exportiere() steht in Exporter. Woher „weiß“ sie zur Laufzeit, welches ErstelleDokument() ausgeführt wird?',
+   o:['Durch dynamische Bindung (Polymorphie): Es zählt der Typ des tatsächlichen Objekts','Durch einen Parameter, den der Client übergibt','Sie führt immer die Methode der Oberklasse aus','Durch eine switch-Anweisung'], a:0,
+   e:'C# ruft die Methode des <i>tatsächlichen</i> Objekts auf, weil sie mit <code>override</code> überschrieben wurde. Ist es ein <code>CsvExporter</code>-Objekt, läuft dessen Methode.'},
+  {q:'Welches Entwurfsprinzip wird durch die Factory Method besonders unterstützt?',
+   o:['DRY – Don’t Repeat Yourself','Open/Closed – offen für Erweiterung, geschlossen für Änderung','YAGNI – You Ain’t Gonna Need It','Law of Demeter'], a:1,
+   e:'Neue Formate kommen durch <i>neue</i> Klassen hinzu, ohne dass bestehender Code geändert werden muss.'},
+  {q:'Eine Kollegin schreibt eine Klasse mit einer statischen Methode, die per switch je nach String „csv“ oder „pdf“ das passende Dokument erzeugt. Ist das die GoF-Factory-Method?',
+   o:['Ja, jede Methode, die Objekte erzeugt, ist eine Factory Method','Nein, das ist eine „Simple Factory“. Bei der Factory Method entscheiden Unterklassen durch Überschreiben','Ja, solange die Methode static ist','Nein, das ist das Singleton-Muster'], a:1,
+   e:'Eine Simple Factory ist praktisch, aber kein GoF-Muster. Für jedes neue Format muss der switch geändert werden. Die Factory Method nutzt dagegen Vererbung.'},
+];
+let answered = {};
+function renderQuiz(){
+  $('#quizBox').innerHTML = QUIZ.map((q,i)=>`<div class="card q" data-q="${i}">
+    <div class="qh"><span class="qn">${i+1}.</span>${q.q}</div>
+    <div class="opts">${q.o.map((o,j)=>`<button class="opt" data-j="${j}">${o}</button>`).join('')}</div>
+    <div class="expl hidden"></div></div>`).join('');
+  updateScore();
+}
+function updateScore(){
+  const n = Object.keys(answered).length, r = Object.values(answered).filter(Boolean).length;
+  $('#scoreView').textContent = n===QUIZ.length
+    ? `Ergebnis: ${r} von ${QUIZ.length} richtig ${r===QUIZ.length?'🏆 Spitze!':r>=6?'👍 Gut gemacht!':'– schau dir den Ablauf (Schritt 4) noch einmal an.'}`
+    : `Beantwortet: ${n} von ${QUIZ.length}`;
+}
+$('#quizBox').addEventListener('click', e=>{
+  const b = e.target.closest('.opt'); if(!b) return;
+  const card = b.closest('.q'), i = +card.dataset.q, j = +b.dataset.j, q = QUIZ[i];
+  if(i in answered) return;
+  answered[i] = j===q.a;
+  card.querySelectorAll('.opt').forEach((o,k)=>{ o.disabled=true; if(k===q.a) o.classList.add('right'); else if(k===j) o.classList.add('wrong'); });
+  const ex = card.querySelector('.expl'); ex.classList.remove('hidden');
+  ex.innerHTML = (j===q.a?'✅ <b>Richtig.</b> ':'❌ <b>Leider nicht.</b> ') + q.e;
+  updateScore();
+});
+$('#quizReset').onclick = ()=>{ answered={}; renderQuiz(); };
+renderQuiz();
+
+/* ---------- Bonus: Bibliothek ---------- */
+const BN_SIMPLE = [
+  '// in der Bibliothek (DLL):',
+  'public static IDokument Erstelle(string format) {',
+  '    switch (format) {',
+  '        case "csv": return new CsvDokument();',
+  '        case "pdf": return new PdfDokument();',
+  {t:'        // case "xml": ...   ← unmöglich!', cls:'chg'},
+  '        default: throw new ArgumentException(format);',
+  '    }',
+  '}'];
+renderCode($('#bnSimple'), BN_SIMPLE);
+const BN_LIB = [
+  '// nur als fertige DLL vorhanden',
+  '',
+  'public interface IDokument {',
+  '    string Formatiere(string[][] tabelle);',
+  '}',
+  '',
+  'public abstract class Exporter {',
+  '    // die Factory Method: der „Haken“ für Erweiterungen',
+  '    protected abstract IDokument ErstelleDokument();',
+  '',
+  '    public void Exportiere(string[][] tabelle) {',
+  '        SchreibeKopfzeile();',
+  '        IDokument d = ErstelleDokument();',
+  '        string inhalt = d.Formatiere(tabelle);',
+  '        Speichere(inhalt);',
+  '        Protokolliere();',
+  '    }',
+  '',
+  '    // ... und 300 weitere Zeilen für Kopfzeile,',
+  '    // Speichern, Fehlerbehandlung und Protokoll',
+  '}',
+  '',
+  'public class CsvExporter : Exporter { ... }',
+  'public class PdfExporter : Exporter { ... }'];
+const BN_OWN = [
+  'using SchulExport;',
+  '',
+  'class XmlDokument : IDokument {',
+  '    public string Formatiere(string[][] tabelle) {',
+  '        // Tabelle in XML für die Zeugnissoftware umwandeln',
+  '        return XmlHelfer.AlsXml(tabelle);',
+  '    }',
+  '}',
+  '',
+  'class XmlExporter : Exporter {',
+  '    protected override IDokument ErstelleDokument() {',
+  '        return new XmlDokument();',
+  '    }',
+  '}',
+  '',
+  '// irgendwo in unserer App, z. B. beim Menüaufbau:',
+  'menue.Add(new ExportKnopf("XML-Export", new XmlExporter()));',
+  '',
+  '// ... die Lehrkraft klickt auf „XML-Export“:',
+  'exporter.Exportiere(noten);'];
+const heute = (()=>{ try { return new Date().toLocaleDateString('de-DE'); } catch(e){ return 'heute'; } })();
+const XML = '<noten><schueler name="Anna" note="2"/><schueler name="Ben" note="1"/></noten>';
+const BN_EV = {
+  kopf:['lib',`Kopfzeile geschrieben: „Gesamtschule Musterstadt, ${heute}“`],
+  neu:['own','<code>XmlDokument</code>-Objekt erzeugt'],
+  xml:['own',`Tabelle in XML umgewandelt: <code>${esc(XML)}</code>`],
+  save:['lib','Datei gespeichert'],
+  log:['lib','Protokoll-Eintrag geschrieben'],
+};
+const BN_STEPS = [
+  {side:'own', mark:'exporter.Exportiere(noten);', ev:[], title:'Unsere App startet den Export',
+   txt:'Der Knopf hält einen <code>XmlExporter</code>, eine Klasse aus <b>unserem</b> Projekt. Er ruft <code>Exportiere()</code> auf. Diese Methode haben wir aber gar nicht geschrieben: <code>XmlExporter</code> erbt sie von der Bibliothek.'},
+  {side:'lib', mark:'SchreibeKopfzeile();', ev:['kopf'], title:'Jetzt arbeitet die Bibliothek',
+   txt:'Ab hier läuft Code aus der DLL. Sie schreibt die Kopfzeile. Diese Arbeit erledigt die Bibliothek für <b>alle</b> Formate, wir müssen sie nicht selbst programmieren.'},
+  {side:'lib', mark:'IDokument d = ErstelleDokument();', ev:['kopf'], title:'Die Bibliothek braucht ein Dokument',
+   txt:'Die Bibliothek ruft ihre Factory Method auf. Die ist <code>abstract</code>: Die Bibliothek weiß selbst nicht, welches Dokument gleich kommt.'},
+  {side:'own', mark:'return new XmlDokument();', ev:['kopf','neu'], title:'Sprung in UNSEREN Code!',
+   txt:'Das Objekt ist ein <code>XmlExporter</code>, und der hat die Methode mit <code>override</code> überschrieben. Also springt das Programm <b>aus der Bibliothek in unseren Code</b>. Hier entsteht ein <code>XmlDokument</code>, eine Klasse, die es beim Programmieren der Bibliothek noch gar nicht gab.'},
+  {side:'lib', mark:'IDokument d = ErstelleDokument();', ev:['kopf','neu'], title:'Zurück in der Bibliothek',
+   txt:'Das <code>XmlDokument</code> wird an die Bibliothek zurückgegeben und in <code>d</code> gespeichert. Die Bibliothek sieht darin nur ein <code>IDokument</code>.'},
+  {side:'lib', mark:'string inhalt = d.Formatiere(tabelle);', ev:['kopf','neu'], title:'Die Bibliothek benutzt das Dokument',
+   txt:'Die Bibliothek ruft <code>d.Formatiere(tabelle)</code> auf. Sie kennt dabei nur das Interface <code>IDokument</code>.'},
+  {side:'own', mark:'return XmlHelfer.AlsXml(tabelle);', ev:['kopf','neu','xml'], title:'Und wieder unser Code',
+   txt:'Polymorphie: Weil <code>d</code> ein <code>XmlDokument</code> ist, läuft <b>unsere</b> Methode und erzeugt das XML.'},
+  {side:'lib', mark:'string inhalt = d.Formatiere(tabelle);', ev:['kopf','neu','xml'], title:'Zurück in der Bibliothek',
+   txt:'Das XML wird zurückgegeben und in der Variablen <code>inhalt</code> der Bibliothek gespeichert.'},
+  {side:'lib', mark:'Speichere(inhalt);', ev:['kopf','neu','xml','save'], title:'Die Bibliothek speichert unser XML',
+   txt:'Die Bibliothek speichert den Inhalt mit ihrer eigenen, bewährten Logik, ohne zu wissen, dass es XML ist.'},
+  {side:'lib', mark:'Protokolliere();', ev:['kopf','neu','xml','save','log'], title:'… und protokolliert',
+   txt:'Auch das Protokoll bekommen wir geschenkt. Der Export ist fertig.'},
+  {side:null, mark:null, ev:['kopf','neu','xml','save','log'], title:'Fertig! Was ist passiert?',
+   txt:'Die Bibliothek hat <b>unseren Code aufgerufen, ohne ihn zu kennen</b>, und an der DLL wurde <b>keine einzige Zeile</b> geändert. Wir haben nur zwei eigene Klassen geschrieben und einen Knopf ergänzt. Möglich macht das die Factory Method als vorgesehener Erweiterungspunkt.'},
+];
+let bnIdx = 0, bnTimer = null;
+function bnRender(el, lines, mark, active){
+  const cur = active && mark ? lines.findIndex(l=>(typeof l==='string'?l:l.t).includes(mark)) : -1;
+  renderCode(el, lines.map((l,i)=>({t:typeof l==='string'?l:l.t, cls: i===cur?'cur':''})));
+  if(cur>=0) scrollToLine(el, cur);
+}
+function bnShow(){
+  const s = BN_STEPS[bnIdx];
+  bnRender($('#bnLib'), BN_LIB, s.mark, s.side==='lib');
+  bnRender($('#bnOwn'), BN_OWN, s.mark, s.side==='own');
+  $('#bnLibBox').classList.toggle('act', s.side==='lib');
+  $('#bnOwnBox').classList.toggle('act', s.side==='own');
+  $('#bnWho').innerHTML = s.side==='lib' ? 'Gerade aktiv: 📦 Bibliothek' : s.side==='own' ? 'Gerade aktiv: ✏️ Unser Code' : '✅ Export abgeschlossen';
+  $('#bnNum').textContent = `Schritt ${bnIdx+1} von ${BN_STEPS.length}`;
+  $('#bnTitle').textContent = s.title;
+  $('#bnTxt').innerHTML = s.txt;
+  $('#bnLog').innerHTML = s.ev.length ? s.ev.map(k=>{ const [src,t]=BN_EV[k]; return `<div class="ev"><span class="src ${src}">${src==='lib'?'📦 Bibliothek':'✏️ Unser Code'}</span><span>${t}</span></div>`; }).join('') : '<span class="note">noch nichts</span>';
+  $('#bnPrev').disabled = bnIdx===0;
+  $('#bnNext').disabled = bnIdx===BN_STEPS.length-1;
+}
+function bnStop(){ clearInterval(bnTimer); bnTimer=null; $('#bnPlay').textContent='▶ Auto'; }
+$('#bnNext').onclick = ()=>{ bnStop(); if(bnIdx<BN_STEPS.length-1){ bnIdx++; bnShow(); } };
+$('#bnPrev').onclick = ()=>{ bnStop(); if(bnIdx>0){ bnIdx--; bnShow(); } };
+$('#bnPlay').onclick = ()=>{
+  if(bnTimer){ bnStop(); return; }
+  if(bnIdx===BN_STEPS.length-1){ bnIdx=0; bnShow(); }
+  $('#bnPlay').textContent='⏸ Pause';
+  bnTimer = setInterval(()=>{ if(bnIdx<BN_STEPS.length-1){ bnIdx++; bnShow(); } if(bnIdx===BN_STEPS.length-1) bnStop(); }, 3600);
+};
+$('#bnEdit').onclick = ()=>{
+  $('#bnEditMsg').innerHTML = `<div class="feedback no">🔒 <b>Zugriff verweigert.</b> <code>SchulExport.dll</code> ist eine kompilierte Bibliothek. Es gibt keinen Quellcode zum Bearbeiten, und eine Änderung wäre beim nächsten Update ohnehin verloren. Ihr braucht einen Weg, die Bibliothek <i>von außen</i> zu erweitern …</div>`;
+};
+
+show();
+})();
+</script>
+
+</body>
+</html>
